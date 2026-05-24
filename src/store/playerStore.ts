@@ -15,6 +15,22 @@ function saveTheme(theme: Theme) {
   localStorage.setItem("music-player:theme", theme);
 }
 
+function generateShuffledOrder(length: number, currentIndex: number): number[] {
+  const indices = Array.from({ length }, (_, i) => i);
+  // Fisher-Yates shuffle
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  // Move current index to the front so it stays in place
+  const pos = indices.indexOf(currentIndex);
+  if (pos > 0) {
+    indices.splice(pos, 1);
+    indices.unshift(currentIndex);
+  }
+  return indices;
+}
+
 interface PlayerStore {
   currentTrack: Track | null;
   isPlaying: boolean;
@@ -27,6 +43,8 @@ interface PlayerStore {
   queue: Track[];
   queueIndex: number;
   history: number[];
+  shuffledOrder: number[];
+  shuffledPosition: number;
   theme: Theme;
 
   setCurrentTrack: (track: Track | null) => void;
@@ -58,6 +76,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   queue: [],
   queueIndex: -1,
   history: [],
+  shuffledOrder: [],
+  shuffledPosition: -1,
 
   setCurrentTrack: (track) =>
     set({
@@ -76,7 +96,20 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       repeatMode: state.repeatMode === "all" ? "one" : "all",
     })),
 
-  toggleShuffle: () => set((state) => ({ shuffle: !state.shuffle, history: [] })),
+  toggleShuffle: () =>
+    set((state) => {
+      const enabling = !state.shuffle;
+      if (enabling) {
+        const order = generateShuffledOrder(state.queue.length, state.queueIndex);
+        return {
+          shuffle: true,
+          shuffledOrder: order,
+          shuffledPosition: 0,
+          history: [],
+        };
+      }
+      return { shuffle: false, shuffledOrder: [], shuffledPosition: -1 };
+    }),
 
   toggleLyricsPanel: () =>
     set((state) => ({ showLyricsPanel: !state.showLyricsPanel })),
@@ -89,75 +122,128 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     }),
 
   setQueue: (queue, startIndex = 0) =>
-    set({
-      queue,
-      queueIndex: startIndex,
-      currentTrack: queue[startIndex] || null,
-      currentTime: 0,
-      duration: queue[startIndex]?.duration || 0,
-      history: [],
+    set((state) => {
+      const base: Partial<PlayerStore> = {
+        queue,
+        queueIndex: startIndex,
+        currentTrack: queue[startIndex] || null,
+        currentTime: 0,
+        duration: queue[startIndex]?.duration || 0,
+        history: [],
+      };
+      if (state.shuffle && queue.length > 0) {
+        base.shuffledOrder = generateShuffledOrder(queue.length, startIndex);
+        base.shuffledPosition = 0;
+      }
+      return base;
     }),
 
   nextTrack: () => {
-    const { queue, queueIndex, repeatMode, shuffle } = get();
+    const { queue, queueIndex, repeatMode, shuffle, shuffledOrder, shuffledPosition } = get();
     if (queue.length === 0) return null;
 
     if (repeatMode === "one") {
       return get().currentTrack;
     }
 
-    let nextIndex: number;
-    if (shuffle && queue.length > 1) {
+    if (shuffle && shuffledOrder.length > 0) {
+      let nextPos = shuffledPosition + 1;
+      if (nextPos >= shuffledOrder.length) nextPos = 0;
+      const nextIndex = shuffledOrder[nextPos];
+      const nextTrack = queue[nextIndex];
       const history = [...get().history, queueIndex];
-      do {
-        nextIndex = Math.floor(Math.random() * queue.length);
-      } while (nextIndex === queueIndex);
-      const nextTrack = queue[nextIndex];
-      set({ queueIndex: nextIndex, currentTrack: nextTrack, currentTime: 0, duration: nextTrack?.duration || 0, history });
-      return nextTrack;
-    } else {
-      nextIndex = queueIndex + 1;
-      if (nextIndex >= queue.length) {
-        nextIndex = 0;
-      }
-      const nextTrack = queue[nextIndex];
-      set({ queueIndex: nextIndex, currentTrack: nextTrack, currentTime: 0, duration: nextTrack?.duration || 0 });
+      set({
+        shuffledPosition: nextPos,
+        queueIndex: nextIndex,
+        currentTrack: nextTrack,
+        currentTime: 0,
+        duration: nextTrack?.duration || 0,
+        history,
+      });
       return nextTrack;
     }
+
+    let nextIndex = queueIndex + 1;
+    if (nextIndex >= queue.length) nextIndex = 0;
+    const nextTrack = queue[nextIndex];
+    set({
+      queueIndex: nextIndex,
+      currentTrack: nextTrack,
+      currentTime: 0,
+      duration: nextTrack?.duration || 0,
+    });
+    return nextTrack;
   },
 
   prevTrack: () => {
-    const { queue, queueIndex, currentTime, shuffle, history } = get();
+    const { queue, queueIndex, currentTime, shuffle, history, shuffledOrder, shuffledPosition } = get();
     if (queue.length === 0) return null;
 
-    // If we're more than 3 seconds in, restart current track
     if (currentTime > 3) {
       set({ currentTime: 0 });
       return get().currentTrack;
     }
 
-    // In shuffle mode, go back through play history
-    if (shuffle && history.length > 0) {
-      const newHistory = history.slice(0, -1);
-      const prevIndex = history[history.length - 1];
+    if (shuffle && shuffledOrder.length > 0) {
+      if (history.length > 0) {
+        const newHistory = history.slice(0, -1);
+        const prevIndex = history[history.length - 1];
+        const prevTrack = queue[prevIndex];
+        // Find position of this index in shuffledOrder
+        const pos = shuffledOrder.indexOf(prevIndex);
+        set({
+          shuffledPosition: pos >= 0 ? pos : shuffledPosition,
+          queueIndex: prevIndex,
+          currentTrack: prevTrack,
+          currentTime: 0,
+          duration: prevTrack?.duration || 0,
+          history: newHistory,
+        });
+        return prevTrack;
+      }
+      // No history — go backwards in shuffled order
+      let prevPos = shuffledPosition - 1;
+      if (prevPos < 0) prevPos = shuffledOrder.length - 1;
+      const prevIndex = shuffledOrder[prevPos];
       const prevTrack = queue[prevIndex];
-      set({ queueIndex: prevIndex, currentTrack: prevTrack, currentTime: 0, duration: prevTrack?.duration || 0, history: newHistory });
+      set({
+        shuffledPosition: prevPos,
+        queueIndex: prevIndex,
+        currentTrack: prevTrack,
+        currentTime: 0,
+        duration: prevTrack?.duration || 0,
+      });
       return prevTrack;
     }
 
     let prevIndex = queueIndex - 1;
     if (prevIndex < 0) prevIndex = queue.length - 1;
-
     const prevTrack = queue[prevIndex];
-    set({ queueIndex: prevIndex, currentTrack: prevTrack, currentTime: 0, duration: prevTrack?.duration || 0 });
+    set({
+      queueIndex: prevIndex,
+      currentTrack: prevTrack,
+      currentTime: 0,
+      duration: prevTrack?.duration || 0,
+    });
     return prevTrack;
   },
 
   playTrackAt: (index) => {
-    const { queue } = get();
+    const { queue, shuffle } = get();
     if (index < 0 || index >= queue.length) return null;
     const track = queue[index];
-    set({ queueIndex: index, currentTrack: track, currentTime: 0, duration: track?.duration || 0 });
+    const updates: Partial<PlayerStore> = {
+      queueIndex: index,
+      currentTrack: track,
+      currentTime: 0,
+      duration: track?.duration || 0,
+      history: [],
+    };
+    if (shuffle) {
+      updates.shuffledOrder = generateShuffledOrder(queue.length, index);
+      updates.shuffledPosition = 0;
+    }
+    set(updates);
     return track;
   },
 
@@ -169,15 +255,32 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     let newIndex = queueIndex;
 
     if (newQueue.length === 0) {
-      set({ queue: [], queueIndex: -1, currentTrack: null, currentTime: 0, duration: 0, isPlaying: false });
+      set({
+        queue: [],
+        queueIndex: -1,
+        currentTrack: null,
+        currentTime: 0,
+        duration: 0,
+        isPlaying: false,
+        shuffledOrder: [],
+        shuffledPosition: -1,
+        history: [],
+      });
       return;
     }
 
     if (index === queueIndex) {
-      // Removed current track — play next track at same index (which is now the next song)
       newIndex = Math.min(index, newQueue.length - 1);
       const nextTrack = newQueue[newIndex];
-      set({ queue: newQueue, queueIndex: newIndex, currentTrack: nextTrack, currentTime: 0, duration: nextTrack?.duration || 0, isPlaying });
+      set({
+        queue: newQueue,
+        queueIndex: newIndex,
+        currentTrack: nextTrack,
+        currentTime: 0,
+        duration: nextTrack?.duration || 0,
+        isPlaying,
+        history: [],
+      });
     } else if (index < queueIndex) {
       newIndex = queueIndex - 1;
       set({ queue: newQueue, queueIndex: newIndex });
