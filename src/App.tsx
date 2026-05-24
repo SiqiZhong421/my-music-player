@@ -3,6 +3,7 @@ import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Sidebar } from "@/components/Layout/Sidebar";
 import { MainContent } from "@/components/Layout/MainContent";
 import { PlayerBar } from "@/components/Layout/PlayerBar";
+import { MiniPlayer } from "@/components/Player/MiniPlayer";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useLibrary } from "@/hooks/useLibrary";
 import { usePlayerStore } from "@/store/playerStore";
@@ -11,6 +12,7 @@ function App() {
   useAudioPlayer();
   const { importLastFolder } = useLibrary();
   const theme = usePlayerStore((s) => s.theme);
+  const isMiniPlayer = usePlayerStore((s) => s.isMiniPlayer);
 
   const { togglePlay, skipNext, skipPrev } = useAudioPlayer();
   const handlersRef = useRef({ togglePlay, skipNext, skipPrev });
@@ -79,6 +81,10 @@ function App() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  if (isMiniPlayer) {
+    return <MiniPlayer />;
+  }
 
   return (
     <div className={`flex flex-col h-screen bg-apple-bg text-white overflow-hidden select-none ${theme === "light" ? "light" : ""}`}>

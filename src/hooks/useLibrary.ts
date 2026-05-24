@@ -6,11 +6,8 @@ import { usePlayerStore } from "@/store/playerStore";
 import { localizeTrackTitle } from "@/utils/trackTitles";
 import { deduplicateTrackTitles } from "@/utils/deduplicateTitles";
 import type { Track } from "@/types";
-import avatarJpg from "@/assets/avatar.jpg";
 
 let hasRestoredLastFolder = false;
-
-const YANZI_NAMES = new Set(["孙燕姿", "yanzi sun", "sun yanzi", "stefanie sun"]);
 
 interface RawTrackMetadata {
   path: string;
@@ -27,17 +24,10 @@ interface RawTrackMetadata {
   file_name: string;
 }
 
-function isYanzi(artist: string | null | undefined, albumArtist: string | null | undefined): boolean {
-  const check = (name: string) => YANZI_NAMES.has(name.toLowerCase().trim());
-  return check(artist || "") || check(albumArtist || "");
-}
-
 function normalizeTrack(raw: RawTrackMetadata): Track {
-  const coverArt = isYanzi(raw.artist, raw.album_artist)
-    ? avatarJpg
-    : raw.cover_art
-      ? `data:image/jpeg;base64,${raw.cover_art}`
-      : null;
+  const coverArt = raw.cover_art
+    ? `data:image/jpeg;base64,${raw.cover_art}`
+    : null;
 
   return {
     path: raw.path,

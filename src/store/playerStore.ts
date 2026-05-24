@@ -39,6 +39,7 @@ interface PlayerStore {
   shuffle: boolean;
   showLyricsPanel: boolean;
   theme: Theme;
+  isMiniPlayer: boolean;
 
   setCurrent: (track: Track | null) => void;
   setIsPlaying: (playing: boolean) => void;
@@ -60,6 +61,7 @@ interface PlayerStore {
   toggleShuffle: () => void;
   toggleLyricsPanel: () => void;
   toggleTheme: () => void;
+  setIsMiniPlayer: (value: boolean) => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -77,6 +79,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   shuffle: false,
   showLyricsPanel: false,
   theme: loadTheme(),
+  isMiniPlayer: false,
 
   setCurrent: (track) =>
     set({
@@ -315,4 +318,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       saveTheme(next);
       return { theme: next };
     }),
+
+  setIsMiniPlayer: (value) => set({ isMiniPlayer: value }),
 }));

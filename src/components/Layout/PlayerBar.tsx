@@ -1,6 +1,7 @@
-import { Captions, Sun, Moon } from "lucide-react";
+import { Captions, Sun, Moon, PictureInPicture2 } from "lucide-react";
 import { usePlayerStore } from "@/store/playerStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useMiniPlayerWindow } from "@/hooks/useMiniPlayerWindow";
 import { AlbumArt } from "@/components/Player/AlbumArt";
 import { ControlButtons } from "@/components/Player/ControlButtons";
 import { ProgressBar } from "@/components/Player/ProgressBar";
@@ -15,6 +16,7 @@ export function PlayerBar() {
   const theme = usePlayerStore((s) => s.theme);
   const toggleTheme = usePlayerStore((s) => s.toggleTheme);
   const { seek, togglePlay, skipNext, skipPrev } = useAudioPlayer();
+  const { enterMiniPlayer } = useMiniPlayerWindow();
 
   return (
     <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl grid grid-cols-[1fr_2fr_1fr] items-center px-4">
@@ -46,6 +48,13 @@ export function PlayerBar() {
 
       <div className="flex items-center gap-3 justify-end min-w-0">
         <VolumeSlider />
+        <button
+          onClick={enterMiniPlayer}
+          className="p-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-all"
+          title="迷你播放器"
+        >
+          <PictureInPicture2 size={16} />
+        </button>
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-all"
