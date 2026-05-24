@@ -17,8 +17,8 @@ export function PlayerBar() {
   const { seek, togglePlay, skipNext, skipPrev } = useAudioPlayer();
 
   return (
-    <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl flex items-center px-4 gap-4">
-      <div className="flex items-center gap-3 w-64 min-w-0">
+    <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl grid grid-cols-[1fr_auto_1fr] items-center px-4">
+      <div className="flex items-center gap-3 min-w-0">
         <AlbumArt
           coverArt={currentTrack?.coverArt || null}
           size="sm"
@@ -32,7 +32,7 @@ export function PlayerBar() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center max-w-xl">
+      <div className="flex flex-col items-center justify-center max-w-xl mx-4">
         <ControlButtons
           onTogglePlay={togglePlay}
           onNext={skipNext}
@@ -44,7 +44,7 @@ export function PlayerBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 w-64 justify-end">
+      <div className="flex items-center gap-3 justify-end min-w-0">
         <VolumeSlider />
         <button
           onClick={toggleTheme}
