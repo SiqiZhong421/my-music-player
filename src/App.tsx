@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useEffect, useRef } from "react";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Sidebar } from "@/components/Layout/Sidebar";
 import { MainContent } from "@/components/Layout/MainContent";
 import { PlayerBar } from "@/components/Layout/PlayerBar";
@@ -8,34 +8,76 @@ import { useLibrary } from "@/hooks/useLibrary";
 import { usePlayerStore } from "@/store/playerStore";
 
 function App() {
-  // Initialize audio player
   useAudioPlayer();
   const { importLastFolder } = useLibrary();
   const theme = usePlayerStore((s) => s.theme);
 
+  const { togglePlay, skipNext, skipPrev } = useAudioPlayer();
+  const handlersRef = useRef({ togglePlay, skipNext, skipPrev });
+  handlersRef.current = { togglePlay, skipNext, skipPrev };
+
   useEffect(() => {
-    // Defer library loading so UI renders first
-    const timer = setTimeout(() => {
-      importLastFolder();
-    }, 0);
+    const timer = setTimeout(() => importLastFolder(), 0);
     return () => clearTimeout(timer);
   }, [importLastFolder]);
 
   // Sync native title bar theme
   useEffect(() => {
-    getCurrentWindow().setTheme(theme).catch(() => {});
+    const appWindow = getCurrentWebviewWindow();
+    appWindow.setTheme(theme).catch(() => {});
   }, [theme]);
 
-  // Handle media keys
+  // Media keys and keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && e.target === document.body) {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
+      if (e.code === "Space" && !isInput) {
         e.preventDefault();
-        // togglePlay handled by global state
+        handlersRef.current.togglePlay();
+        return;
+      }
+
+      if (e.code === "MediaPlayPause") {
+        e.preventDefault();
+        handlersRef.current.togglePlay();
+        return;
+      }
+      if (e.code === "MediaTrackNext") {
+        e.preventDefault();
+        handlersRef.current.skipNext();
+        return;
+      }
+      if (e.code === "MediaTrackPrevious") {
+        e.preventDefault();
+        handlersRef.current.skipPrev();
+        return;
+      }
+
+      // Ctrl/Cmd + Arrow
+      if ((e.ctrlKey || e.metaKey) && e.code === "ArrowRight") {
+        e.preventDefault();
+        handlersRef.current.skipNext();
+      } else if ((e.ctrlKey || e.metaKey) && e.code === "ArrowLeft") {
+        e.preventDefault();
+        handlersRef.current.skipPrev();
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+
+    // Media Session API for OS media controls
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.setActionHandler("play", () => handlersRef.current.togglePlay());
+      navigator.mediaSession.setActionHandler("pause", () => handlersRef.current.togglePlay());
+      navigator.mediaSession.setActionHandler("previoustrack", () => handlersRef.current.skipPrev());
+      navigator.mediaSession.setActionHandler("nexttrack", () => handlersRef.current.skipNext());
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   return (
