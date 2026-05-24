@@ -8,7 +8,7 @@ import { VolumeSlider } from "@/components/Player/VolumeSlider";
 import { cn } from "@/utils/cn";
 
 export function PlayerBar() {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const showLyricsPanel = usePlayerStore((s) => s.showLyricsPanel);
   const toggleLyricsPanel = usePlayerStore((s) => s.toggleLyricsPanel);
@@ -20,15 +20,15 @@ export function PlayerBar() {
     <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl grid grid-cols-[1fr_2fr_1fr] items-center px-4">
       <div className="flex items-center gap-3 min-w-0">
         <AlbumArt
-          coverArt={currentTrack?.coverArt || null}
+          coverArt={current?.coverArt || null}
           size="sm"
           isPlaying={isPlaying}
         />
         <div className="min-w-0">
           <p className="text-sm font-medium text-white truncate">
-            {currentTrack?.title || "未播放"}
+            {current?.title || "未播放"}
           </p>
-          <p className="text-xs text-white/40 truncate">{currentTrack?.artist || ""}</p>
+          <p className="text-xs text-white/40 truncate">{current?.artist || ""}</p>
         </div>
       </div>
 
@@ -60,9 +60,9 @@ export function PlayerBar() {
             showLyricsPanel
               ? "text-apple-accent bg-apple-accent/10"
               : "text-white/40 hover:text-white/80 hover:bg-white/5",
-            !currentTrack && "opacity-30 cursor-not-allowed"
+            !current && "opacity-30 cursor-not-allowed"
           )}
-          disabled={!currentTrack}
+          disabled={!current}
           title="歌词"
         >
           <Captions size={16} />

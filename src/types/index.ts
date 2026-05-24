@@ -43,14 +43,15 @@ export interface LyricLine {
 export type RepeatMode = "one" | "all";
 
 export interface PlayerState {
-  currentTrack: Track | null;
+  current: Track | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
   volume: number;
+  history: Track[];
+  upcoming: Track[];
+  source: Track[];
   repeatMode: RepeatMode;
   shuffle: boolean;
   showLyricsPanel: boolean;
-  queue: Track[];
-  queueIndex: number;
 }

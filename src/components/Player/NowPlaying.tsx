@@ -9,12 +9,12 @@ import { useLibraryStore } from "@/store/libraryStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 
 export function NowPlaying() {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const setCurrentView = useLibraryStore((s) => s.setCurrentView);
   const { seek, togglePlay, skipNext, skipPrev } = useAudioPlayer();
 
-  if (!currentTrack) {
+  if (!current) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-white/30">
         <p className="text-lg">未在播放</p>
@@ -43,7 +43,7 @@ export function NowPlaying() {
         {/* Left: Album art + info + controls */}
         <div className="flex-1 flex flex-col items-center justify-center px-8 py-4 gap-6">
           <AlbumArt
-            coverArt={currentTrack.coverArt}
+            coverArt={current.coverArt}
             size="xl"
             isPlaying={isPlaying}
             className="shadow-2xl shadow-black/60"
@@ -51,10 +51,10 @@ export function NowPlaying() {
 
           <div className="text-center space-y-1 w-full max-w-sm">
             <h2 className="text-xl font-semibold text-white truncate">
-              {currentTrack.title}
+              {current.title}
             </h2>
             <p className="text-sm text-white/50 truncate">
-              {currentTrack.artist} — {currentTrack.album}
+              {current.artist} — {current.album}
             </p>
           </div>
 

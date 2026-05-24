@@ -5,7 +5,7 @@ import { usePlayerStore } from "@/store/playerStore";
 import type { LyricLine } from "@/types";
 
 export function useLyrics() {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const current = usePlayerStore((s) => s.current);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [hasLrcFile, setHasLrcFile] = useState(false);
@@ -14,7 +14,7 @@ export function useLyrics() {
 
   // Load lyrics when track changes
   useEffect(() => {
-    if (!currentTrack) {
+    if (!current) {
       setLyrics([]);
       setHasLrcFile(false);
       return;
@@ -26,8 +26,8 @@ export function useLyrics() {
       setHasLrcFile(false);
 
       // First try embedded lyrics from metadata
-      if (currentTrack.lyrics) {
-        const parsed = parseLrc(currentTrack.lyrics);
+      if (current.lyrics) {
+        const parsed = parseLrc(current.lyrics);
         if (parsed.length > 0) {
           setLyrics(parsed);
           setHasLrcFile(true);
@@ -37,7 +37,7 @@ export function useLyrics() {
       }
 
       // Then try external .lrc file
-      const lrcPath = currentTrack.path.replace(/\.[^/.]+$/, ".lrc");
+      const lrcPath = current.path.replace(/\.[^/.]+$/, ".lrc");
       try {
         const content = await readTextFile(lrcPath);
         const parsed = parseLrc(content);
@@ -54,7 +54,7 @@ export function useLyrics() {
     };
 
     loadLyrics();
-  }, [currentTrack]);
+  }, [current]);
 
   const currentLineIndex = useMemo(() => {
     return findCurrentLyricIndex(lyrics, currentTime);

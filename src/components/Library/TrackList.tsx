@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { CheckSquare, Clock, Plus, Square, Trash2, ListChecks } from "lucide-react";
+import { CheckSquare, Clock, Plus, Square, Trash2, ListChecks, ListPlus } from "lucide-react";
 import { usePlayerStore } from "@/store/playerStore";
 import { useLibraryStore } from "@/store/libraryStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -27,11 +27,10 @@ export function TrackList({
   const addTracksToPlaylist = useLibraryStore((s) => s.addTracksToPlaylist);
   const removeTrackFromPlaylist = useLibraryStore((s) => s.removeTrackFromPlaylist);
   const removeTrack = useLibraryStore((s) => s.removeTrack);
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
-  const queue = usePlayerStore((s) => s.queue);
+  const current = usePlayerStore((s) => s.current);
   const setQueue = usePlayerStore((s) => s.setQueue);
-  const playTrackAt = usePlayerStore((s) => s.playTrackAt);
-  const insertNextInShuffle = usePlayerStore((s) => s.insertNextInShuffle);
+  const playFrom = usePlayerStore((s) => s.playFrom);
+  const playNext = usePlayerStore((s) => s.playNext);
   const { playTrack } = useAudioPlayer();
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [targetPlaylistId, setTargetPlaylistId] = useState("");
@@ -64,26 +63,17 @@ export function TrackList({
   );
 
   const handlePlayTrack = (track: Track, index: number) => {
-    const isShuffle = usePlayerStore.getState().shuffle;
-    const isInQueue = queue.some((t) => t.path === track.path);
+    const hasSession =
+      !!usePlayerStore.getState().current ||
+      usePlayerStore.getState().upcoming.length > 0 ||
+      usePlayerStore.getState().history.length > 0;
 
-    if (!isShuffle) {
-      // Shuffle OFF: always set entire source as queue, play sequentially from clicked track
+    if (!hasSession) {
       setQueue(queueSource, index);
-      playTrack(track, true);
     } else {
-      // Shuffle ON
-      if (isInQueue) {
-        // Track already in queue: jump to it without resetting shuffle order
-        const queueIdx = queue.findIndex((t) => t.path === track.path);
-        playTrackAt(queueIdx);
-        playTrack(track, true);
-      } else {
-        // Track NOT in queue: insert as next in shuffled order
-        insertNextInShuffle(track);
-        playTrack(track, true);
-      }
+      playFrom(track, index, queueSource);
     }
+    playTrack(track, true);
   };
 
   const toggleSelected = (trackPath: string) => {
@@ -173,6 +163,7 @@ export function TrackList({
 
   return (
     <div className="flex flex-col">
+      <div className="sticky top-0 z-10 bg-apple-bg">
       {showBatchActions && (
         <div className="flex items-center gap-2 px-1 pb-3">
           <button
@@ -180,8 +171,8 @@ export function TrackList({
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors",
               isBatchMode
-                ? "text-apple-accent bg-apple-accent/10 hover:bg-apple-accent/15"
-                : "text-white/60 hover:text-white hover:bg-white/[0.05]"
+                ? "text-apple-accent bg-apple-accent/10 hover:bg-apple-accent/15 border border-apple-accent/30"
+                : "text-white/70 hover:text-white/90 hover:bg-white/[0.05] border border-white/[0.08]"
             )}
           >
             <ListChecks size={15} />
@@ -192,7 +183,7 @@ export function TrackList({
             <>
               <button
                 onClick={toggleAll}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/[0.05] transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-white/70 hover:text-white/90 hover:bg-white/[0.05] border border-white/[0.08] transition-colors"
               >
                 {selectedPaths.size === tracks.length && tracks.length > 0 ? (
                   <CheckSquare size={15} />
@@ -261,18 +252,20 @@ export function TrackList({
         </div>
       )}
 
-      <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-2 text-xs font-medium text-white/40 uppercase tracking-wider border-b border-white/[0.06]">
+      <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-4 px-4 py-2 text-xs font-medium text-white/40 uppercase tracking-wider border-b border-white/[0.06]">
         <span className="w-5" />
         <span>标题</span>
         <span className="hidden md:block">专辑</span>
         <span className="w-16 text-right flex items-center justify-end gap-1">
           <Clock size={12} />
         </span>
+        <span className="w-5" />
+      </div>
       </div>
 
       <div className="flex flex-col">
         {tracks.map((track) => {
-          const isCurrent = currentTrack?.path === track.path;
+          const isCurrent = current?.path === track.path;
           const isSelected = selectedPaths.has(track.path);
           const sourceIndex = queueSource.findIndex((item) => item.path === track.path);
 
@@ -295,12 +288,17 @@ export function TrackList({
             }
           };
 
+          const handleAddToQueue = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            playNext(track);
+          };
+
           return (
             <div
               key={`${playlistId ?? "library"}-${track.path}`}
               onClick={handleRowClick}
               className={cn(
-                "grid grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-2.5 items-center cursor-pointer transition-colors duration-150 group rounded-lg mx-1",
+                "grid grid-cols-[auto_1fr_1fr_auto_auto] gap-4 px-4 py-2.5 items-center cursor-pointer transition-colors duration-150 group rounded-lg mx-1",
                 isCurrent ? "bg-white/[0.08]" : isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.04]"
               )}
             >
@@ -312,7 +310,7 @@ export function TrackList({
                     ? isSelected
                       ? "text-apple-accent"
                       : "text-white/35 hover:text-white/75"
-                    : "text-white/20 group-hover:text-red-400"
+                    : "text-white/30 group-hover:text-red-400"
                 )}
                 title={
                   isBatchMode
@@ -348,6 +346,14 @@ export function TrackList({
               <span className="hidden md:block text-sm text-white/40 truncate">{track.album}</span>
 
               <span className="w-16 text-right text-xs text-white/40">{formatTime(track.duration)}</span>
+
+              <button
+                onClick={handleAddToQueue}
+                className="w-5 text-white/30 hover:text-white/80 transition-colors"
+                title="添加至播放队列"
+              >
+                <ListPlus size={14} />
+              </button>
             </div>
           );
         })}

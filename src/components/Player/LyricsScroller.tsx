@@ -4,10 +4,10 @@ import { usePlayerStore } from "@/store/playerStore";
 import { cn } from "@/utils/cn";
 
 export function LyricsScroller() {
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const current = usePlayerStore((s) => s.current);
   const { lyrics, currentLineIndex, hasLrcFile, loading, currentLineRef } = useLyrics();
 
-  if (!currentTrack) {
+  if (!current) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-white/30">
         <Music size={48} strokeWidth={1} className="mb-4" />

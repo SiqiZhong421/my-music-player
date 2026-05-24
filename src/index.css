@@ -4,29 +4,29 @@
 
 @layer base {
   :root {
-    --c-bg: 0 0 0;
-    --c-surface: 18 18 18;
-    --c-elevated: 30 30 30;
+    --c-bg: 22 22 22;
+    --c-surface: 30 30 30;
+    --c-elevated: 40 40 40;
     --c-text: 255 255 255;
     --c-text-secondary: 179 179 179;
     --c-text-tertiary: 102 102 102;
     --c-border: 255 255 255;
-    --slider-track: rgba(255, 255, 255, 0.1);
-    --slider-fill: rgba(255, 255, 255, 0.6);
+    --slider-track: rgba(255, 255, 255, 0.12);
+    --slider-fill: rgba(255, 255, 255, 0.65);
     --slider-thumb: #fff;
   }
 
   .light {
-    --c-bg: 245 245 247;
+    --c-bg: 242 242 246;
     --c-surface: 255 255 255;
-    --c-elevated: 240 240 242;
-    --c-text: 26 26 26;
-    --c-text-secondary: 102 102 102;
-    --c-text-tertiary: 153 153 153;
+    --c-elevated: 246 246 248;
+    --c-text: 28 28 30;
+    --c-text-secondary: 99 99 102;
+    --c-text-tertiary: 142 142 147;
     --c-border: 0 0 0;
     --slider-track: rgba(0, 0, 0, 0.15);
     --slider-fill: rgba(0, 0, 0, 0.55);
-    --slider-thumb: #1a1a1a;
+    --slider-thumb: #1c1c1e;
   }
 
   /* Synchronized theme transition */

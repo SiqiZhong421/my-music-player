@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Disc, List, ListMusic, Mic2, Plus, Search, X } from "lucide-react";
+import { Disc, List, ListMusic, Mic2, Plus, Search, Trash2, X } from "lucide-react";
 import { useLibraryStore } from "@/store/libraryStore";
 import { FolderPicker } from "@/components/Library/FolderPicker";
 import { cn } from "@/utils/cn";
@@ -17,6 +17,7 @@ export function Sidebar() {
   const setCurrentView = useLibraryStore((s) => s.setCurrentView);
   const playlists = useLibraryStore((s) => s.playlists);
   const createPlaylist = useLibraryStore((s) => s.createPlaylist);
+  const deletePlaylist = useLibraryStore((s) => s.deletePlaylist);
   const setSelectedPlaylist = useLibraryStore((s) => s.setSelectedPlaylist);
   const tracks = useLibraryStore((s) => s.tracks);
   const searchQuery = useLibraryStore((s) => s.searchQuery);
@@ -24,10 +25,24 @@ export function Sidebar() {
 
   const [inputValue, setInputValue] = useState(searchQuery);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    playlistId: string;
+    name: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     setInputValue(searchQuery);
   }, [searchQuery]);
+
+  // Close context menu on any click outside
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [contextMenu]);
 
   const handleSearchChange = (value: string) => {
     setInputValue(value);
@@ -121,6 +136,15 @@ export function Sidebar() {
               <button
                 key={playlist.id}
                 onClick={() => setSelectedPlaylist(playlist.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({
+                    playlistId: playlist.id,
+                    name: playlist.name,
+                    x: e.clientX,
+                    y: e.clientY,
+                  });
+                }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left",
                   currentView === "playlist" && selectedPlaylistId === playlist.id
@@ -150,6 +174,26 @@ export function Sidebar() {
       <div className="px-3 py-3 border-t border-white/[0.06]">
         <FolderPicker />
       </div>
+
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-apple-elevated border border-apple-border/[0.08] rounded-lg py-1 shadow-2xl min-w-[120px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            onClick={() => {
+              if (window.confirm(`确定删除歌单"${contextMenu.name}"吗？`)) {
+                deletePlaylist(contextMenu.playlistId);
+              }
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-apple-surface transition-colors text-left"
+          >
+            <Trash2 size={12} />
+            <span>删除歌单</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

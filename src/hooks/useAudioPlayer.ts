@@ -3,7 +3,6 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { usePlayerStore } from "@/store/playerStore";
 import { useLibraryStore } from "@/store/libraryStore";
 
-// Module-level singleton audio instance
 let globalAudio: HTMLAudioElement | null = null;
 let listenersAttached = false;
 let controllerOwner: symbol | null = null;
@@ -18,25 +17,24 @@ function getAudio(): HTMLAudioElement {
 export function useAudioPlayer() {
   const ownerRef = useRef(Symbol("audio-player-owner"));
 
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const current = usePlayerStore((s) => s.current);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const volume = usePlayerStore((s) => s.volume);
   const repeatMode = usePlayerStore((s) => s.repeatMode);
   const setIsPlaying = usePlayerStore((s) => s.setIsPlaying);
   const setCurrentTime = usePlayerStore((s) => s.setCurrentTime);
   const setDuration = usePlayerStore((s) => s.setDuration);
-  const nextTrack = usePlayerStore((s) => s.nextTrack);
-  const setCurrentTrack = usePlayerStore((s) => s.setCurrentTrack);
+  const storeNext = usePlayerStore((s) => s.next);
+  const storePrev = usePlayerStore((s) => s.prev);
+  const setCurrent = usePlayerStore((s) => s.setCurrent);
   const setQueue = usePlayerStore((s) => s.setQueue);
+  const jumpTo = usePlayerStore((s) => s.jumpTo);
   const tracks = useLibraryStore((s) => s.tracks);
 
-  // Only one hook instance should drive the shared audio element. Other
-  // instances can still expose callbacks for buttons and lists.
   useEffect(() => {
     if (!controllerOwner) {
       controllerOwner = ownerRef.current;
     }
-
     return () => {
       if (controllerOwner === ownerRef.current) {
         controllerOwner = null;
@@ -44,7 +42,6 @@ export function useAudioPlayer() {
     };
   }, []);
 
-  // Initialize audio element once globally
   useEffect(() => {
     if (listenersAttached) return;
     listenersAttached = true;
@@ -54,24 +51,24 @@ export function useAudioPlayer() {
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
     const onLoadedMetadata = () => setDuration(audio.duration || 0);
     const onEnded = () => {
-      const next = usePlayerStore.getState().nextTrack();
+      const next = usePlayerStore.getState().next();
       if (!next) {
         setIsPlaying(false);
         setCurrentTime(0);
       } else {
-        const audio = getAudio();
+        const a = getAudio();
         const targetSrc = convertFileSrc(next.path);
-        if (audio.src !== targetSrc) {
-          audio.src = targetSrc;
-          audio.load();
+        if (a.src !== targetSrc) {
+          a.src = targetSrc;
+          a.load();
         }
         setIsPlaying(true);
       }
     };
     const onPlay = () => setIsPlaying(true);
     const onPause = () => {
-      const audio = getAudio();
-      if (!audio.ended) setIsPlaying(false);
+      const a = getAudio();
+      if (!a.ended) setIsPlaying(false);
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -90,14 +87,12 @@ export function useAudioPlayer() {
     };
   }, [setCurrentTime, setDuration, setIsPlaying]);
 
-  // Load track when currentTrack changes
   useEffect(() => {
     if (controllerOwner !== ownerRef.current) return;
-
     const audio = getAudio();
-    if (!currentTrack) return;
+    if (!current) return;
 
-    const targetSrc = convertFileSrc(currentTrack.path);
+    const targetSrc = convertFileSrc(current.path);
     if (audio.src !== targetSrc) {
       audio.src = targetSrc;
       audio.load();
@@ -105,33 +100,27 @@ export function useAudioPlayer() {
     if (isPlaying) {
       audio.play().catch(() => setIsPlaying(false));
     }
-  }, [currentTrack?.path]); // eslint-disable-line
+  }, [current?.path]); // eslint-disable-line
 
-  // Play/pause control
   useEffect(() => {
     if (controllerOwner !== ownerRef.current) return;
-
     const audio = getAudio();
-    if (!currentTrack) return;
+    if (!current) return;
 
     if (isPlaying) {
       audio.play().catch(() => setIsPlaying(false));
     } else {
       audio.pause();
     }
-  }, [isPlaying, currentTrack]); // eslint-disable-line
+  }, [isPlaying, current]); // eslint-disable-line
 
-  // Volume control
   useEffect(() => {
     if (controllerOwner !== ownerRef.current) return;
-
     getAudio().volume = volume;
   }, [volume]);
 
-  // Repeat mode on audio element
   useEffect(() => {
     if (controllerOwner !== ownerRef.current) return;
-
     getAudio().loop = repeatMode === "one";
   }, [repeatMode]);
 
@@ -142,44 +131,50 @@ export function useAudioPlayer() {
   }, [setCurrentTime]);
 
   const playTrack = useCallback(
-    (track: typeof currentTrack, autoPlay = true) => {
+    (track: typeof current, autoPlay = true) => {
       if (!track) return;
       const state = usePlayerStore.getState();
-      if (state.queue.length === 0 && tracks.length > 0) {
+
+      // If no session active, start one from library
+      if (!state.current && state.upcoming.length === 0 && tracks.length > 0) {
         const idx = tracks.findIndex((t) => t.path === track.path);
         setQueue(tracks, idx >= 0 ? idx : 0);
         if (autoPlay) setIsPlaying(true);
         return;
       }
-      const queueIdx = state.queue.findIndex((t) => t.path === track.path);
-      if (queueIdx >= 0) {
-        state.playTrackAt(queueIdx);
+
+      // Navigate to track in current session, or add as next
+      const inSession =
+        state.current?.path === track.path ||
+        state.upcoming.some((t) => t.path === track.path) ||
+        state.history.some((t) => t.path === track.path);
+      if (inSession) {
+        jumpTo(track);
       } else {
-        setCurrentTrack(track);
+        state.playNext(track);
       }
       if (autoPlay) setIsPlaying(true);
     },
-    [setCurrentTrack, setIsPlaying, setQueue, tracks]
+    [setCurrent, setIsPlaying, setQueue, jumpTo, tracks]
   );
 
   const togglePlay = useCallback(() => {
-    if (!currentTrack && tracks.length > 0) {
+    if (!current && tracks.length > 0) {
       playTrack(tracks[0]);
     } else {
       setIsPlaying(!isPlaying);
     }
-  }, [currentTrack, isPlaying, setIsPlaying, tracks, playTrack]);
+  }, [current, isPlaying, setIsPlaying, tracks, playTrack]);
 
   const skipNext = useCallback(() => {
-    const next = nextTrack();
-    if (next) setIsPlaying(true);
-  }, [nextTrack, setIsPlaying]);
+    const n = storeNext();
+    if (n) setIsPlaying(true);
+  }, [storeNext, setIsPlaying]);
 
   const skipPrev = useCallback(() => {
-    const state = usePlayerStore.getState();
-    const prev = state.prevTrack();
-    if (prev) setIsPlaying(true);
-  }, [setIsPlaying]);
+    const p = storePrev();
+    if (p) setIsPlaying(true);
+  }, [storePrev, setIsPlaying]);
 
   return {
     seek,

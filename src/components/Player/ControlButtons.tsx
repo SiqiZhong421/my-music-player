@@ -15,7 +15,7 @@ export function ControlButtons({ onTogglePlay, onNext, onPrev, size = "md" }: Co
   const shuffle = usePlayerStore((s) => s.shuffle);
   const toggleRepeat = usePlayerStore((s) => s.toggleRepeat);
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
-  const hasTrack = usePlayerStore((s) => !!s.currentTrack);
+  const hasTrack = usePlayerStore((s) => !!s.current);
 
   const btnSize = size === "sm" ? "w-8 h-8" : "w-10 h-10";
   const playSize = size === "sm" ? "w-10 h-10" : "w-14 h-14";
