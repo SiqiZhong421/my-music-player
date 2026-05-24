@@ -1,0 +1,64 @@
+import { Captions } from "lucide-react";
+import { usePlayerStore } from "@/store/playerStore";
+import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { AlbumArt } from "@/components/Player/AlbumArt";
+import { ControlButtons } from "@/components/Player/ControlButtons";
+import { ProgressBar } from "@/components/Player/ProgressBar";
+import { VolumeSlider } from "@/components/Player/VolumeSlider";
+import { cn } from "@/utils/cn";
+
+export function PlayerBar() {
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const showLyricsPanel = usePlayerStore((s) => s.showLyricsPanel);
+  const toggleLyricsPanel = usePlayerStore((s) => s.toggleLyricsPanel);
+  const { seek, togglePlay, skipNext, skipPrev } = useAudioPlayer();
+
+  return (
+    <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl flex items-center px-4 gap-4">
+      <div className="flex items-center gap-3 w-64 min-w-0">
+        <AlbumArt
+          coverArt={currentTrack?.coverArt || null}
+          size="sm"
+          isPlaying={isPlaying}
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-white truncate">
+            {currentTrack?.title || "未播放"}
+          </p>
+          <p className="text-xs text-white/40 truncate">{currentTrack?.artist || ""}</p>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center max-w-xl">
+        <ControlButtons
+          onTogglePlay={togglePlay}
+          onNext={skipNext}
+          onPrev={skipPrev}
+          size="sm"
+        />
+        <div className="w-full mt-1">
+          <ProgressBar onSeek={seek} compact />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 w-64 justify-end">
+        <VolumeSlider />
+        <button
+          onClick={toggleLyricsPanel}
+          className={cn(
+            "p-2 rounded-lg transition-all",
+            showLyricsPanel
+              ? "text-apple-accent bg-apple-accent/10"
+              : "text-white/40 hover:text-white/80 hover:bg-white/5",
+            !currentTrack && "opacity-30 cursor-not-allowed"
+          )}
+          disabled={!currentTrack}
+          title="歌词"
+        >
+          <Captions size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
