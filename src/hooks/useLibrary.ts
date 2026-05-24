@@ -4,6 +4,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useLibraryStore } from "@/store/libraryStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { localizeTrackTitle } from "@/utils/trackTitles";
+import { deduplicateTrackTitles } from "@/utils/deduplicateTitles";
 import type { Track } from "@/types";
 import avatarJpg from "@/assets/avatar.jpg";
 
@@ -70,7 +71,7 @@ export function useLibrary() {
           sourcePath: folder,
         });
 
-        const tracks = rawTracks.map(normalizeTrack);
+        const tracks = deduplicateTrackTitles(rawTracks.map(normalizeTrack));
         setTracks(tracks);
         if (tracks.length > 0) {
           setQueue(tracks, 0);
@@ -107,7 +108,7 @@ export function useLibrary() {
 
     try {
       const rawTracks: RawTrackMetadata[] = await invoke("load_library");
-      const tracks = rawTracks.map(normalizeTrack);
+      const tracks = deduplicateTrackTitles(rawTracks.map(normalizeTrack));
       setTracks(tracks);
       if (tracks.length > 0) {
         setQueue(tracks, 0);
