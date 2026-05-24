@@ -59,6 +59,12 @@ export function useAudioPlayer() {
         setIsPlaying(false);
         setCurrentTime(0);
       } else {
+        const audio = getAudio();
+        const targetSrc = convertFileSrc(next.path);
+        if (audio.src !== targetSrc) {
+          audio.src = targetSrc;
+          audio.load();
+        }
         setIsPlaying(true);
       }
     };

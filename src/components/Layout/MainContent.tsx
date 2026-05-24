@@ -55,11 +55,11 @@ export function MainContent() {
             <p>暂无专辑</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="flex flex-wrap justify-center gap-6">
             {albums.map((album) => (
               <div
                 key={`${album.artist}-${album.title}`}
-                className="group cursor-pointer"
+                className="group cursor-pointer w-48"
                 onClick={() => {
                   setSelectedAlbum(album);
                   setQueue(album.tracks, 0);
@@ -69,7 +69,7 @@ export function MainContent() {
                 <AlbumArt
                   coverArt={album.coverArt}
                   size="lg"
-                  className="w-full aspect-square rounded-xl mb-3 group-hover:scale-[1.02] transition-transform duration-300"
+                  className="rounded-xl mb-3 group-hover:scale-[1.02] transition-transform duration-300"
                 />
                 <p className="text-sm font-medium text-white/90 truncate">{album.title}</p>
                 <p className="text-xs text-white/40 truncate">
@@ -93,11 +93,11 @@ export function MainContent() {
             <p>暂无艺人</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="flex flex-wrap justify-center gap-6">
             {artists.map((artist) => (
               <div
                 key={artist.name}
-                className="group cursor-pointer text-center"
+                className="group cursor-pointer text-center w-48"
                 onClick={() => {
                   setSelectedArtist(artist);
                   const allTracks = artist.albums.flatMap((a) => a.tracks);
@@ -107,7 +107,7 @@ export function MainContent() {
                   }
                 }}
               >
-                <div className="w-full aspect-square rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-3 group-hover:scale-[1.02] transition-transform duration-300">
+                <div className="w-48 h-48 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-3 group-hover:scale-[1.02] transition-transform duration-300">
                   <Music size={40} className="text-white/20" />
                 </div>
                 <p className="text-sm font-medium text-white/90 truncate">{artist.name}</p>
