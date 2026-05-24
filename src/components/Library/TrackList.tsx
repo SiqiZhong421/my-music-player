@@ -94,6 +94,15 @@ export function TrackList({
     });
   };
 
+  const handleRemoveSelected = () => {
+    if (!playlistId) return;
+    for (const trackPath of selectedPaths) {
+      removeTrackFromPlaylist(playlistId, trackPath);
+    }
+    setSelectedPaths(new Set());
+    setIsBatchMode(false);
+  };
+
   const handleCreatePlaylist = async () => {
     const name = window.prompt("歌单名称");
     if (!name?.trim()) return;
@@ -133,9 +142,11 @@ export function TrackList({
     );
   }
 
+  const showBatchActions = canAddToPlaylist || !!playlistId;
+
   return (
     <div className="flex flex-col">
-      {canAddToPlaylist && (
+      {showBatchActions && (
         <div className="flex items-center gap-2 px-1 pb-3">
           <button
             onClick={toggleBatchMode}
@@ -168,34 +179,47 @@ export function TrackList({
                 </span>
               </button>
 
-              <select
-                value={targetPlaylistId}
-                onChange={(event) => setTargetPlaylistId(event.target.value)}
-                className="h-8 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2 text-xs text-white focus:outline-none"
-              >
-                <option value="">选择歌单</option>
-                {playlists.map((playlist) => (
-                  <option key={playlist.id} value={playlist.id}>
-                    {playlist.name}
-                  </option>
-                ))}
-              </select>
+              {playlistId ? (
+                <button
+                  onClick={handleRemoveSelected}
+                  disabled={selectedTracks.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Trash2 size={14} />
+                  删除选中
+                </button>
+              ) : (
+                <>
+                  <select
+                    value={targetPlaylistId}
+                    onChange={(event) => setTargetPlaylistId(event.target.value)}
+                    className="h-8 bg-white/[0.05] border border-white/[0.08] rounded-lg px-2 text-xs text-white focus:outline-none"
+                  >
+                    <option value="">选择歌单</option>
+                    {playlists.map((playlist) => (
+                      <option key={playlist.id} value={playlist.id}>
+                        {playlist.name}
+                      </option>
+                    ))}
+                  </select>
 
-              <button
-                onClick={handleAddToPlaylist}
-                disabled={selectedTracks.length === 0}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/[0.06] text-white/70 hover:text-white hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <Plus size={14} />
-                加入歌单
-              </button>
+                  <button
+                    onClick={handleAddToPlaylist}
+                    disabled={selectedTracks.length === 0}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/[0.06] text-white/70 hover:text-white hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus size={14} />
+                    加入歌单
+                  </button>
 
-              <button
-                onClick={handleCreatePlaylist}
-                className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors"
-              >
-                新建歌单
-              </button>
+                  <button
+                    onClick={handleCreatePlaylist}
+                    className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors"
+                  >
+                    新建歌单
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
@@ -218,7 +242,7 @@ export function TrackList({
           const sourceIndex = queueSource.findIndex((item) => item.path === track.path);
 
           const handleRowClick = () => {
-            if (isBatchMode && !playlistId) {
+            if (isBatchMode) {
               toggleSelected(track.path);
             } else {
               handlePlayTrack(track, sourceIndex);
@@ -227,10 +251,8 @@ export function TrackList({
 
           const handleActionClick = (e: React.MouseEvent) => {
             e.stopPropagation();
-            if (playlistId) {
+            if (playlistId && !isBatchMode) {
               removeTrackFromPlaylist(playlistId, track.path);
-            } else if (isBatchMode) {
-              toggleSelected(track.path);
             } else {
               toggleSelected(track.path);
             }
@@ -249,19 +271,17 @@ export function TrackList({
                 onClick={handleActionClick}
                 className={cn(
                   "w-5 transition-colors",
-                  playlistId
+                  playlistId && !isBatchMode
                     ? "text-white/35 hover:text-red-400"
-                    : isBatchMode
-                    ? isSelected
-                      ? "text-apple-accent"
-                      : "text-white/35 hover:text-white/75"
                     : isSelected
                     ? "text-apple-accent"
+                    : isBatchMode
+                    ? "text-white/35 hover:text-white/75"
                     : "text-white/20 group-hover:text-white/50 hover:text-white/75"
                 )}
-                title={playlistId ? "从歌单移除" : isBatchMode ? "选择" : "选择"}
+                title={playlistId && !isBatchMode ? "从歌单移除" : "选择"}
               >
-                {playlistId ? (
+                {playlistId && !isBatchMode ? (
                   <Trash2 size={14} />
                 ) : isSelected ? (
                   <CheckSquare size={15} className="text-apple-accent" />

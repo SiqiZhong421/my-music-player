@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { Disc, Mic2, Music } from "lucide-react";
 import { useLibraryStore } from "@/store/libraryStore";
@@ -18,7 +19,12 @@ export function MainContent() {
   const { playTrack } = useAudioPlayer();
   const setQueue = usePlayerStore((s) => s.setQueue);
   const showLyricsPanel = usePlayerStore((s) => s.showLyricsPanel);
-  const selectedPlaylist = useLibraryStore((s) => s.getSelectedPlaylist)();
+  const playlists = useLibraryStore((s) => s.playlists);
+  const selectedPlaylistId = useLibraryStore((s) => s.selectedPlaylistId);
+  const selectedPlaylist = useMemo(
+    () => playlists.find((p) => p.id === selectedPlaylistId) ?? null,
+    [playlists, selectedPlaylistId]
+  );
 
   const renderWithLyrics = (content: ReactNode) => (
     <div className="flex-1 h-full min-w-0 flex overflow-hidden">

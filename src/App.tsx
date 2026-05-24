@@ -11,7 +11,11 @@ function App() {
   const { importLastFolder } = useLibrary();
 
   useEffect(() => {
-    importLastFolder();
+    // Defer library loading so UI renders first
+    const timer = setTimeout(() => {
+      importLastFolder();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [importLastFolder]);
 
   // Handle media keys

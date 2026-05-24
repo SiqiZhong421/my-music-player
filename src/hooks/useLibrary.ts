@@ -6,7 +6,6 @@ import { usePlayerStore } from "@/store/playerStore";
 import { localizeTrackTitle } from "@/utils/trackTitles";
 import type { Track } from "@/types";
 
-const LAST_LIBRARY_FOLDER_KEY = "music-player:last-library-folder";
 let hasRestoredLastFolder = false;
 
 interface RawTrackMetadata {
@@ -48,13 +47,13 @@ export function useLibrary() {
   const setQueue = usePlayerStore((s) => s.setQueue);
 
   const importFolder = useCallback(
-    async (folder: string, remember = true) => {
+    async (folder: string) => {
       setIsScanning(true);
       setSelectedFolder(folder);
 
       try {
-        const rawTracks: RawTrackMetadata[] = await invoke("scan_music_folder", {
-          path: folder,
+        const rawTracks: RawTrackMetadata[] = await invoke("import_folder_to_library", {
+          sourcePath: folder,
         });
 
         const tracks = rawTracks.map(normalizeTrack);
@@ -62,15 +61,8 @@ export function useLibrary() {
         if (tracks.length > 0) {
           setQueue(tracks, 0);
         }
-        if (remember) {
-          localStorage.setItem(LAST_LIBRARY_FOLDER_KEY, folder);
-        }
       } catch (err) {
         console.error("导入音乐文件夹失败:", err);
-        if (remember) {
-          localStorage.removeItem(LAST_LIBRARY_FOLDER_KEY);
-          setSelectedFolder(null);
-        }
       } finally {
         setIsScanning(false);
       }
@@ -99,11 +91,17 @@ export function useLibrary() {
     if (hasRestoredLastFolder) return;
     hasRestoredLastFolder = true;
 
-    const lastFolder = localStorage.getItem(LAST_LIBRARY_FOLDER_KEY);
-    if (!lastFolder) return;
-
-    await importFolder(lastFolder, false);
-  }, [importFolder]);
+    try {
+      const rawTracks: RawTrackMetadata[] = await invoke("load_library");
+      const tracks = rawTracks.map(normalizeTrack);
+      setTracks(tracks);
+      if (tracks.length > 0) {
+        setQueue(tracks, 0);
+      }
+    } catch (err) {
+      console.error("加载音乐库失败:", err);
+    }
+  }, [setTracks, setQueue]);
 
   return { importFolder, importFolderFromDialog, importLastFolder };
 }

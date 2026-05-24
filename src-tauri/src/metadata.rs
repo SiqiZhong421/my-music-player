@@ -4,7 +4,7 @@ use std::fs;
 use std::path::Path;
 use base64::{Engine as _, engine::general_purpose};
 
-#[derive(serde::Serialize, Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct TrackMetadata {
     pub path: String,
     pub title: Option<String>,
