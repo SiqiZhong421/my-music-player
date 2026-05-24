@@ -16,6 +16,7 @@ export function ProgressBar({ onSeek, compact = false }: ProgressBarProps) {
   const barRef = useRef<HTMLDivElement>(null);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const hoverPercent = duration > 0 && hoverTime !== null ? (hoverTime / duration) * 100 : 0;
 
   const calculateTimeFromPosition = useCallback(
     (clientX: number) => {
@@ -62,6 +63,8 @@ export function ProgressBar({ onSeek, compact = false }: ProgressBarProps) {
     setIsDragging(false);
   }, []);
 
+  const remaining = duration - currentTime;
+
   return (
     <div
       className={cn("group w-full select-none", compact ? "gap-2" : "flex flex-col gap-1.5")}
@@ -70,7 +73,19 @@ export function ProgressBar({ onSeek, compact = false }: ProgressBarProps) {
       {!compact && (
         <div className="flex justify-between text-[11px] font-medium tracking-wide text-white/40">
           <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+          <span>{formatTime(-remaining)}</span>
+        </div>
+      )}
+
+      {/* Hover time labels (compact mode) */}
+      {compact && (
+        <div className="flex justify-between text-[11px] font-medium text-white/50 h-[14px]">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {formatTime(currentTime)}
+          </span>
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {formatTime(-remaining)}
+          </span>
         </div>
       )}
 
@@ -90,22 +105,18 @@ export function ProgressBar({ onSeek, compact = false }: ProgressBarProps) {
           />
         </div>
 
-        {/* Hover tooltip */}
+        {/* Vertical hover indicator bar */}
         {hoverTime !== null && !isDragging && (
           <div
-            className="absolute -top-7 text-[10px] font-medium text-white/80 bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm pointer-events-none transform -translate-x-1/2"
-            style={{
-              left: `${duration > 0 ? (hoverTime / duration) * 100 : 0}%`,
-            }}
-          >
-            {formatTime(hoverTime)}
-          </div>
+            className="absolute top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full bg-white/60 pointer-events-none transition-opacity duration-150"
+            style={{ left: `${hoverPercent}%`, transform: "translate(-50%, -50%)" }}
+          />
         )}
 
         {/* Thumb */}
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[--slider-thumb] shadow-lg shadow-black/30 transform -translate-x-1/2 transition-opacity",
+            "absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[--slider-thumb] shadow-lg shadow-black/30 transform -translate-x-1/2",
             isDragging || hoverTime !== null ? "opacity-100 scale-110" : "opacity-0 group-hover:opacity-100"
           )}
           style={{ left: `${progress}%` }}

@@ -1,8 +1,10 @@
 export function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || seconds < 0) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
+  if (!isFinite(seconds)) return "0:00";
+  const negative = seconds < 0;
+  const abs = Math.abs(seconds);
+  const mins = Math.floor(abs / 60);
+  const secs = Math.floor(abs % 60);
+  return `${negative ? "-" : ""}${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 export function parseDuration(duration: number | null | undefined): number {

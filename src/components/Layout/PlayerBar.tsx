@@ -32,14 +32,14 @@ export function PlayerBar() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center max-w-xl mx-4">
+      <div className="flex flex-col items-center justify-center max-w-2xl mx-4">
         <ControlButtons
           onTogglePlay={togglePlay}
           onNext={skipNext}
           onPrev={skipPrev}
           size="sm"
         />
-        <div className="w-full mt-1">
+        <div className="w-full mt-3">
           <ProgressBar onSeek={seek} compact />
         </div>
       </div>
