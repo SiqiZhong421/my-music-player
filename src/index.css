@@ -3,6 +3,26 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --c-bg: 0 0 0;
+    --c-surface: 18 18 18;
+    --c-elevated: 30 30 30;
+    --c-text: 255 255 255;
+    --c-text-secondary: 179 179 179;
+    --c-text-tertiary: 102 102 102;
+    --c-border: 255 255 255;
+  }
+
+  .light {
+    --c-bg: 245 245 247;
+    --c-surface: 255 255 255;
+    --c-elevated: 240 240 242;
+    --c-text: 26 26 26;
+    --c-text-secondary: 102 102 102;
+    --c-text-tertiary: 153 153 153;
+    --c-border: 0 0 0;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -38,6 +58,59 @@
     background: rgba(250, 45, 72, 0.3);
   }
 }
+
+/* Light theme overrides for non-apple color classes */
+.light body {
+  color: #1a1a1a;
+}
+.light .text-white { color: #1a1a1a; }
+.light .text-white\/90 { color: rgba(0,0,0,0.85); }
+.light .text-white\/80 { color: rgba(0,0,0,0.75); }
+.light .text-white\/70 { color: rgba(0,0,0,0.65); }
+.light .text-white\/60 { color: rgba(0,0,0,0.55); }
+.light .text-white\/50 { color: rgba(0,0,0,0.45); }
+.light .text-white\/40 { color: rgba(0,0,0,0.35); }
+.light .text-white\/35 { color: rgba(0,0,0,0.3); }
+.light .text-white\/30 { color: rgba(0,0,0,0.25); }
+.light .text-white\/25 { color: rgba(0,0,0,0.2); }
+.light .text-white\/20 { color: rgba(0,0,0,0.15); }
+
+.light .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.08); }
+.light .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.1); }
+.light .border-white\/20 { border-color: rgba(0,0,0,0.15); }
+.light .border-white\/10 { border-color: rgba(0,0,0,0.08); }
+
+.light .bg-black\/20 { background-color: rgba(0,0,0,0.04); }
+.light .bg-black\/40 { background-color: rgba(0,0,0,0.06); }
+
+.light .bg-white\/\[0\.03\] { background-color: rgba(0,0,0,0.02); }
+.light .bg-white\/\[0\.04\] { background-color: rgba(0,0,0,0.03); }
+.light .bg-white\/\[0\.05\] { background-color: rgba(0,0,0,0.04); }
+.light .bg-white\/\[0\.06\] { background-color: rgba(0,0,0,0.05); }
+.light .bg-white\/\[0\.08\] { background-color: rgba(0,0,0,0.06); }
+.light .bg-white\/\[0\.1\] { background-color: rgba(0,0,0,0.08); }
+.light .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0,0,0,0.03); }
+.light .hover\:bg-white\/\[0\.05\]:hover { background-color: rgba(0,0,0,0.04); }
+.light .hover\:bg-white\/\[0\.1\]:hover { background-color: rgba(0,0,0,0.08); }
+.light .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04); }
+.light .hover\:bg-white\/\[0\.15\]:hover { background-color: rgba(0,0,0,0.1); }
+
+.light .hover\:text-white:hover { color: #000; }
+.light .hover\:text-white\/80:hover { color: rgba(0,0,0,0.75); }
+.light .hover\:text-white\/75:hover { color: rgba(0,0,0,0.7); }
+.light .hover\:text-white\/70:hover { color: rgba(0,0,0,0.65); }
+.light .hover\:text-white\/50:hover { color: rgba(0,0,0,0.45); }
+.light .hover\:text-white\/35:hover { color: rgba(0,0,0,0.3); }
+
+.light .shadow-black\/50 { --tw-shadow-color: rgba(0,0,0,0.1); }
+.light .shadow-black\/20 { --tw-shadow-color: rgba(0,0,0,0.05); }
+.light .shadow-2xl { --tw-shadow-color: rgba(0,0,0,0.08); }
+.light .shadow-lg { --tw-shadow-color: rgba(0,0,0,0.05); }
+
+.light .placeholder\:text-white\/30::placeholder { color: rgba(0,0,0,0.25); }
+.light .focus\:border-white\/20:focus { border-color: rgba(0,0,0,0.2); }
+
+.light .ring-white\/10 { --tw-ring-color: rgba(0,0,0,0.08); }
 
 @layer components {
   .glass-panel {

@@ -8,15 +8,15 @@ export default {
     extend: {
       colors: {
         apple: {
-          bg: "#000000",
-          surface: "#121212",
-          elevated: "#1e1e1e",
+          bg: "rgb(var(--c-bg) / <alpha-value>)",
+          surface: "rgb(var(--c-surface) / <alpha-value>)",
+          elevated: "rgb(var(--c-elevated) / <alpha-value>)",
           accent: "#fa2d48",
           accentHover: "#ff4d6a",
-          text: "#ffffff",
-          textSecondary: "#b3b3b3",
-          textTertiary: "#666666",
-          border: "rgba(255,255,255,0.1)",
+          text: "rgb(var(--c-text) / <alpha-value>)",
+          textSecondary: "rgb(var(--c-text-secondary) / <alpha-value>)",
+          textTertiary: "rgb(var(--c-text-tertiary) / <alpha-value>)",
+          border: "rgb(var(--c-border) / <alpha-value>)",
         },
       },
       backdropBlur: {

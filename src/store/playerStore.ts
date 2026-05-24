@@ -1,6 +1,20 @@
 import { create } from "zustand";
 import type { Track, RepeatMode } from "@/types";
 
+type Theme = "dark" | "light";
+
+function loadTheme(): Theme {
+  try {
+    const stored = localStorage.getItem("music-player:theme");
+    if (stored === "light") return "light";
+  } catch {}
+  return "dark";
+}
+
+function saveTheme(theme: Theme) {
+  localStorage.setItem("music-player:theme", theme);
+}
+
 interface PlayerStore {
   currentTrack: Track | null;
   isPlaying: boolean;
@@ -12,6 +26,7 @@ interface PlayerStore {
   showLyricsPanel: boolean;
   queue: Track[];
   queueIndex: number;
+  theme: Theme;
 
   setCurrentTrack: (track: Track | null) => void;
   setIsPlaying: (playing: boolean) => void;
@@ -21,6 +36,7 @@ interface PlayerStore {
   toggleRepeat: () => void;
   toggleShuffle: () => void;
   toggleLyricsPanel: () => void;
+  toggleTheme: () => void;
   setQueue: (queue: Track[], startIndex?: number) => void;
   nextTrack: () => Track | null;
   prevTrack: () => Track | null;
@@ -37,6 +53,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   repeatMode: "all",
   shuffle: false,
   showLyricsPanel: false,
+  theme: loadTheme(),
   queue: [],
   queueIndex: -1,
 
@@ -61,6 +78,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 
   toggleLyricsPanel: () =>
     set((state) => ({ showLyricsPanel: !state.showLyricsPanel })),
+
+  toggleTheme: () =>
+    set((state) => {
+      const next = state.theme === "dark" ? "light" : "dark";
+      saveTheme(next);
+      return { theme: next };
+    }),
 
   setQueue: (queue, startIndex = 0) =>
     set({

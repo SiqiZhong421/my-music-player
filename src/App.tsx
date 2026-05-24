@@ -4,11 +4,13 @@ import { MainContent } from "@/components/Layout/MainContent";
 import { PlayerBar } from "@/components/Layout/PlayerBar";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { useLibrary } from "@/hooks/useLibrary";
+import { usePlayerStore } from "@/store/playerStore";
 
 function App() {
   // Initialize audio player
   useAudioPlayer();
   const { importLastFolder } = useLibrary();
+  const theme = usePlayerStore((s) => s.theme);
 
   useEffect(() => {
     // Defer library loading so UI renders first
@@ -31,7 +33,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-apple-bg text-white overflow-hidden select-none">
+    <div className={`flex flex-col h-screen bg-apple-bg text-white overflow-hidden select-none ${theme === "light" ? "light" : ""}`}>
       <div className="flex flex-1 min-h-0">
         <Sidebar />
         <MainContent />

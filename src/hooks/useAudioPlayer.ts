@@ -58,10 +58,15 @@ export function useAudioPlayer() {
       if (!next) {
         setIsPlaying(false);
         setCurrentTime(0);
+      } else {
+        setIsPlaying(true);
       }
     };
     const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
+    const onPause = () => {
+      const audio = getAudio();
+      if (!audio.ended) setIsPlaying(false);
+    };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);

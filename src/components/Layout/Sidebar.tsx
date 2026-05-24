@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Disc, List, ListMusic, Mic2, Music, Plus, Search, X } from "lucide-react";
+import { Disc, List, ListMusic, Mic2, Plus, Search, X } from "lucide-react";
 import { useLibraryStore } from "@/store/libraryStore";
 import { FolderPicker } from "@/components/Library/FolderPicker";
 import { cn } from "@/utils/cn";
@@ -53,10 +53,8 @@ export function Sidebar() {
   return (
     <div className="w-56 flex flex-col h-full border-r border-white/[0.06] bg-black/20">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-apple-accent to-rose-500 flex items-center justify-center">
-          <Music size={18} className="text-white" />
-        </div>
-        <span className="text-sm font-semibold text-white">Music</span>
+        <img src="/avatar.jpg" alt="Maiki's Player" className="w-8 h-8 rounded-lg object-cover" />
+        <span className="text-sm font-semibold text-white">Maiki's Player</span>
       </div>
 
       <div className="px-3 pb-3">

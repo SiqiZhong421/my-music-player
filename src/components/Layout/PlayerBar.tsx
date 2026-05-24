@@ -1,4 +1,4 @@
-import { Captions } from "lucide-react";
+import { Captions, Sun, Moon } from "lucide-react";
 import { usePlayerStore } from "@/store/playerStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { AlbumArt } from "@/components/Player/AlbumArt";
@@ -12,6 +12,8 @@ export function PlayerBar() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const showLyricsPanel = usePlayerStore((s) => s.showLyricsPanel);
   const toggleLyricsPanel = usePlayerStore((s) => s.toggleLyricsPanel);
+  const theme = usePlayerStore((s) => s.theme);
+  const toggleTheme = usePlayerStore((s) => s.toggleTheme);
   const { seek, togglePlay, skipNext, skipPrev } = useAudioPlayer();
 
   return (
@@ -44,6 +46,13 @@ export function PlayerBar() {
 
       <div className="flex items-center gap-3 w-64 justify-end">
         <VolumeSlider />
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-all"
+          title={theme === "dark" ? "浅色模式" : "深色模式"}
+        >
+          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
         <button
           onClick={toggleLyricsPanel}
           className={cn(
