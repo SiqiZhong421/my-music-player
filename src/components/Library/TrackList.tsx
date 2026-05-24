@@ -26,6 +26,7 @@ export function TrackList({
   const createPlaylist = useLibraryStore((s) => s.createPlaylist);
   const addTracksToPlaylist = useLibraryStore((s) => s.addTracksToPlaylist);
   const removeTrackFromPlaylist = useLibraryStore((s) => s.removeTrackFromPlaylist);
+  const removeTrack = useLibraryStore((s) => s.removeTrack);
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const queue = usePlayerStore((s) => s.queue);
   const setQueue = usePlayerStore((s) => s.setQueue);
@@ -98,6 +99,14 @@ export function TrackList({
     if (!playlistId) return;
     for (const trackPath of selectedPaths) {
       removeTrackFromPlaylist(playlistId, trackPath);
+    }
+    setSelectedPaths(new Set());
+    setIsBatchMode(false);
+  };
+
+  const handleDeleteSelected = async () => {
+    for (const trackPath of selectedPaths) {
+      await removeTrack(trackPath);
     }
     setSelectedPaths(new Set());
     setIsBatchMode(false);
@@ -190,6 +199,15 @@ export function TrackList({
                 </button>
               ) : (
                 <>
+                  <button
+                    onClick={handleDeleteSelected}
+                    disabled={selectedTracks.length === 0}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    删除选中
+                  </button>
+
                   <select
                     value={targetPlaylistId}
                     onChange={(event) => setTargetPlaylistId(event.target.value)}
@@ -251,10 +269,12 @@ export function TrackList({
 
           const handleActionClick = (e: React.MouseEvent) => {
             e.stopPropagation();
-            if (playlistId && !isBatchMode) {
+            if (isBatchMode) {
+              toggleSelected(track.path);
+            } else if (playlistId) {
               removeTrackFromPlaylist(playlistId, track.path);
             } else {
-              toggleSelected(track.path);
+              removeTrack(track.path);
             }
           };
 
@@ -271,22 +291,28 @@ export function TrackList({
                 onClick={handleActionClick}
                 className={cn(
                   "w-5 transition-colors",
-                  playlistId && !isBatchMode
-                    ? "text-white/35 hover:text-red-400"
-                    : isSelected
-                    ? "text-apple-accent"
-                    : isBatchMode
-                    ? "text-white/35 hover:text-white/75"
-                    : "text-white/20 group-hover:text-white/50 hover:text-white/75"
+                  isBatchMode
+                    ? isSelected
+                      ? "text-apple-accent"
+                      : "text-white/35 hover:text-white/75"
+                    : "text-white/20 group-hover:text-red-400"
                 )}
-                title={playlistId && !isBatchMode ? "从歌单移除" : "选择"}
+                title={
+                  isBatchMode
+                    ? "选择"
+                    : playlistId
+                    ? "从歌单移除"
+                    : "从资料库删除"
+                }
               >
-                {playlistId && !isBatchMode ? (
-                  <Trash2 size={14} />
-                ) : isSelected ? (
-                  <CheckSquare size={15} className="text-apple-accent" />
+                {isBatchMode ? (
+                  isSelected ? (
+                    <CheckSquare size={15} className="text-apple-accent" />
+                  ) : (
+                    <Square size={15} />
+                  )
                 ) : (
-                  <Square size={15} />
+                  <Trash2 size={14} />
                 )}
               </button>
 

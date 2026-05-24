@@ -43,6 +43,7 @@ interface LibraryStore {
   deletePlaylist: (playlistId: string) => void;
   addTracksToPlaylist: (playlistId: string, tracks: Track[]) => Promise<void>;
   removeTrackFromPlaylist: (playlistId: string, trackPath: string) => void;
+  removeTrack: (trackPath: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   getSelectedPlaylist: () => Playlist | null;
 }
@@ -183,6 +184,17 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
     );
     savePlaylists(playlists);
     set({ playlists });
+  },
+
+  removeTrack: async (trackPath) => {
+    try {
+      await invoke("delete_track_from_library", { trackPath });
+    } catch {
+      // Continue with local removal even if backend fails
+    }
+    const tracks = get().tracks.filter((t) => t.path !== trackPath);
+    const { albums, artists } = buildAlbumsAndArtists(tracks);
+    set({ tracks, albums, artists });
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),

@@ -117,6 +117,55 @@ async fn import_folder_to_library(
 }
 
 #[tauri::command]
+async fn delete_track_from_library(
+    app_handle: tauri::AppHandle,
+    track_path: String,
+) -> Result<Vec<TrackMetadata>, String> {
+    let data_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
+    let tracks_dir = data_dir.join("tracks");
+    let cache_path = tracks_dir.join("library.json");
+
+    // Delete audio file (only if it's inside the app tracks directory)
+    let path = Path::new(&track_path);
+    if path.starts_with(&tracks_dir) {
+        let _ = fs::remove_file(path);
+        // Also delete sidecar .lrc
+        let lrc_path = path.with_extension("lrc");
+        if lrc_path.exists() {
+            let _ = fs::remove_file(&lrc_path);
+        }
+    }
+
+    // Update the cache
+    let remaining: Vec<TrackMetadata> = if cache_path.exists() {
+        match fs::read_to_string(&cache_path) {
+            Ok(content) if !content.is_empty() => {
+                match serde_json::from_str::<Vec<TrackMetadata>>(&content) {
+                    Ok(tracks) => tracks
+                        .into_iter()
+                        .filter(|t| t.path != track_path && Path::new(&t.path).exists())
+                        .collect(),
+                    Err(_) => Vec::new(),
+                }
+            }
+            _ => Vec::new(),
+        }
+    } else {
+        Vec::new()
+    };
+
+    if !remaining.is_empty() {
+        if let Ok(json) = serde_json::to_string(&remaining) {
+            let _ = fs::write(&cache_path, &json);
+        }
+    } else {
+        let _ = fs::remove_file(&cache_path);
+    }
+
+    Ok(remaining)
+}
+
+#[tauri::command]
 async fn load_library(app_handle: tauri::AppHandle) -> Result<Vec<TrackMetadata>, String> {
     let data_dir = app_handle
         .path()
@@ -168,7 +217,8 @@ pub fn run() {
             get_track_metadata,
             copy_track_to_app_dir,
             import_folder_to_library,
-            load_library
+            load_library,
+            delete_track_from_library
         ])
         .setup(|_app| {
             #[cfg(debug_assertions)]

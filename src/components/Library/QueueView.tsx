@@ -1,9 +1,10 @@
 import { useMemo } from "react";
-import { Play, Trash2, ListMusic } from "lucide-react";
+import { Clock, Play, Trash2, ListMusic } from "lucide-react";
 import { usePlayerStore } from "@/store/playerStore";
 import { useLibraryStore } from "@/store/libraryStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { cn } from "@/utils/cn";
+import { formatTime } from "@/utils/formatTime";
 import type { Track } from "@/types";
 
 export function QueueView() {
@@ -55,11 +56,14 @@ export function QueueView() {
 
   return (
     <div className="flex flex-col">
-      <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2 text-xs font-medium text-white/40 uppercase tracking-wider border-b border-white/[0.06]">
+      <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-4 px-4 py-2 text-xs font-medium text-white/40 uppercase tracking-wider border-b border-white/[0.06]">
+        <span className="w-5" />
         <span className="w-8 text-center">#</span>
         <span>标题</span>
         <span className="hidden md:block">专辑</span>
-        <span className="w-10 text-right" />
+        <span className="w-16 text-right flex items-center justify-end gap-1">
+          <Clock size={12} />
+        </span>
       </div>
 
       <div className="flex flex-col">
@@ -71,10 +75,18 @@ export function QueueView() {
               key={`queue-${track.path}-${originalIndex}`}
               onClick={() => handlePlayTrack(track, originalIndex)}
               className={cn(
-                "grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-2.5 items-center cursor-pointer transition-colors duration-150 group rounded-lg mx-1",
+                "grid grid-cols-[auto_auto_1fr_1fr_auto] gap-4 px-4 py-2.5 items-center cursor-pointer transition-colors duration-150 group rounded-lg mx-1",
                 isCurrent ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
               )}
             >
+              <button
+                onClick={(e) => handleRemove(e, originalIndex)}
+                className="w-5 text-white/20 group-hover:text-red-400 transition-colors"
+                title="从队列移除"
+              >
+                <Trash2 size={14} />
+              </button>
+
               <span className="w-8 text-center text-sm text-white/40 group-hover:text-white/60">
                 {isCurrent ? (
                   <div className="flex items-center justify-center gap-0.5">
@@ -104,13 +116,7 @@ export function QueueView() {
 
               <span className="hidden md:block text-sm text-white/40 truncate">{track.album}</span>
 
-              <button
-                onClick={(e) => handleRemove(e, originalIndex)}
-                className="w-10 text-right text-white/30 hover:text-red-400 transition-colors"
-                title="从队列移除"
-              >
-                <Trash2 size={14} className="ml-auto" />
-              </button>
+              <span className="w-16 text-right text-xs text-white/40">{formatTime(track.duration)}</span>
             </div>
           );
         })}
