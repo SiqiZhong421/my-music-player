@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useLibraryStore } from "@/store/libraryStore";
 import { usePlayerStore } from "@/store/playerStore";
@@ -24,10 +24,18 @@ interface RawTrackMetadata {
   file_name: string;
 }
 
+function resolveCoverArt(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  // File path → asset protocol URL
+  if (raw.includes("\\") || raw.includes("/")) {
+    return convertFileSrc(raw);
+  }
+  // Legacy base64 → data URL
+  return `data:image/jpeg;base64,${raw}`;
+}
+
 function normalizeTrack(raw: RawTrackMetadata): Track {
-  const coverArt = raw.cover_art
-    ? `data:image/jpeg;base64,${raw.cover_art}`
-    : null;
+  const coverArt = resolveCoverArt(raw.cover_art);
 
   return {
     path: raw.path,

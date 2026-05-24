@@ -3,6 +3,7 @@ use std::fs;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 use tauri::Manager;
+use base64::{Engine as _, engine::general_purpose};
 
 mod metadata;
 mod scanner;
@@ -103,6 +104,20 @@ async fn import_folder_to_library(
             let _ = fs::copy(&lrc_source, &lrc_dest);
         }
 
+        // Save cover art as .jpg file
+        if let Some(ref cover_base64) = track.cover_art {
+            if let Ok(cover_bytes) = general_purpose::STANDARD.decode(cover_base64) {
+                let cover_path = dest_path.with_extension("jpg");
+                if fs::write(&cover_path, &cover_bytes).is_ok() {
+                    track.cover_art = Some(cover_path.to_string_lossy().to_string());
+                } else {
+                    track.cover_art = None;
+                }
+            } else {
+                track.cover_art = None;
+            }
+        }
+
         track.path = dest_path.to_string_lossy().to_string();
         updated_tracks.push(track);
     }
@@ -179,11 +194,48 @@ async fn load_library(app_handle: tauri::AppHandle) -> Result<Vec<TrackMetadata>
         match fs::read_to_string(&cache_path) {
             Ok(content) if !content.is_empty() => {
                 if let Ok(tracks) = serde_json::from_str::<Vec<TrackMetadata>>(&content) {
+                    let mut needs_save = false;
                     let valid: Vec<TrackMetadata> = tracks
                         .into_iter()
                         .filter(|t| Path::new(&t.path).exists())
+                        .map(|mut t| {
+                            // Migrate legacy base64 cover_art to .jpg file
+                            if let Some(ref cover) = t.cover_art {
+                                let looks_like_path =
+                                    cover.contains('\\') || cover.contains('/');
+                                if !looks_like_path {
+                                    if let Ok(bytes) =
+                                        general_purpose::STANDARD.decode(cover)
+                                    {
+                                        let audio_path = Path::new(&t.path);
+                                        let cover_path =
+                                            audio_path.with_extension("jpg");
+                                        if fs::write(&cover_path, &bytes).is_ok() {
+                                            t.cover_art = Some(
+                                                cover_path
+                                                    .to_string_lossy()
+                                                    .to_string(),
+                                            );
+                                            needs_save = true;
+                                        } else {
+                                            t.cover_art = None;
+                                        }
+                                    } else {
+                                        t.cover_art = None;
+                                    }
+                                } else if !Path::new(cover).exists() {
+                                    t.cover_art = None;
+                                }
+                            }
+                            t
+                        })
                         .collect();
                     if !valid.is_empty() {
+                        if needs_save {
+                            if let Ok(json) = serde_json::to_string(&valid) {
+                                let _ = fs::write(&cache_path, &json);
+                            }
+                        }
                         return Ok(valid);
                     }
                 }
