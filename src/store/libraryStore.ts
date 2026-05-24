@@ -44,7 +44,6 @@ interface LibraryStore {
   addTracksToPlaylist: (playlistId: string, tracks: Track[]) => Promise<void>;
   removeTrackFromPlaylist: (playlistId: string, trackPath: string) => void;
   setSearchQuery: (query: string) => void;
-  getFilteredTracks: () => Track[];
   getSelectedPlaylist: () => Playlist | null;
 }
 
@@ -187,18 +186,6 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),
-
-  getFilteredTracks: () => {
-    const { tracks, searchQuery } = get();
-    if (!searchQuery.trim()) return tracks;
-    const q = searchQuery.toLowerCase();
-    return tracks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q) ||
-        t.album.toLowerCase().includes(q)
-    );
-  },
 
   getSelectedPlaylist: () => {
     const { playlists, selectedPlaylistId } = get();

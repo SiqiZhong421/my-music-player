@@ -1,4 +1,5 @@
-import { Disc, List, ListMusic, Mic2, Music, Plus, Search } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Disc, List, ListMusic, Mic2, Music, Plus, Search, X } from "lucide-react";
 import { useLibraryStore } from "@/store/libraryStore";
 import { FolderPicker } from "@/components/Library/FolderPicker";
 import { cn } from "@/utils/cn";
@@ -21,6 +22,28 @@ export function Sidebar() {
   const searchQuery = useLibraryStore((s) => s.searchQuery);
   const setSearchQuery = useLibraryStore((s) => s.setSearchQuery);
 
+  const [inputValue, setInputValue] = useState(searchQuery);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearchChange = (value: string) => {
+    setInputValue(value);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      setSearchQuery(value);
+    }, 200);
+  };
+
+  const clearSearch = () => {
+    setInputValue("");
+    setSearchQuery("");
+  };
+
   const handleCreatePlaylist = () => {
     const name = window.prompt("歌单名称");
     if (!name?.trim()) return;
@@ -42,10 +65,18 @@ export function Sidebar() {
           <input
             type="text"
             placeholder="搜索"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/[0.05] border border-white/[0.06] rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-colors"
+            value={inputValue}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full bg-white/[0.05] border border-white/[0.06] rounded-lg pl-8 pr-8 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 transition-colors"
           />
+          {inputValue && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       </div>
 
