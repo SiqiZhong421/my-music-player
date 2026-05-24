@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Sidebar } from "@/components/Layout/Sidebar";
 import { MainContent } from "@/components/Layout/MainContent";
 import { PlayerBar } from "@/components/Layout/PlayerBar";
@@ -19,6 +20,11 @@ function App() {
     }, 0);
     return () => clearTimeout(timer);
   }, [importLastFolder]);
+
+  // Sync native title bar theme
+  useEffect(() => {
+    getCurrentWindow().setTheme(theme).catch(() => {});
+  }, [theme]);
 
   // Handle media keys
   useEffect(() => {
