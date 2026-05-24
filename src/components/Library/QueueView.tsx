@@ -5,35 +5,63 @@ import { useLibraryStore } from "@/store/libraryStore";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { cn } from "@/utils/cn";
 import { formatTime } from "@/utils/formatTime";
-import type { Track } from "@/types";
 
 export function QueueView() {
   const queue = usePlayerStore((s) => s.queue);
   const queueIndex = usePlayerStore((s) => s.queueIndex);
+  const shuffle = usePlayerStore((s) => s.shuffle);
+  const shuffledOrder = usePlayerStore((s) => s.shuffledOrder);
+  const shuffledPosition = usePlayerStore((s) => s.shuffledPosition);
   const removeFromQueue = usePlayerStore((s) => s.removeFromQueue);
   const playTrackAt = usePlayerStore((s) => s.playTrackAt);
   const { playTrack } = useAudioPlayer();
   const searchQuery = useLibraryStore((s) => s.searchQuery);
 
-  const filteredQueue = useMemo(() => {
-    if (!searchQuery.trim()) return queue;
-    const q = searchQuery.toLowerCase();
-    return queue.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.artist.toLowerCase().includes(q) ||
-        t.album.toLowerCase().includes(q)
-    );
-  }, [queue, searchQuery]);
+  // Build display order: when shuffle is on and no search filter, show shuffled order
+  const displayEntries = useMemo(() => {
+    const hasSearch = searchQuery.trim().length > 0;
 
-  const handlePlayTrack = (track: Track, index: number) => {
-    playTrackAt(index);
-    playTrack(track, true);
+    if (hasSearch) {
+      // Search mode: show filtered results with their real queue indices
+      const q = searchQuery.toLowerCase();
+      return queue
+        .map((t, i) => ({ track: t, realIndex: i, shuffledPos: -1 }))
+        .filter(
+          ({ track }) =>
+            track.title.toLowerCase().includes(q) ||
+            track.artist.toLowerCase().includes(q) ||
+            track.album.toLowerCase().includes(q)
+        );
+    }
+
+    if (shuffle && shuffledOrder.length > 0) {
+      // Shuffle mode: show tracks in shuffled order
+      return shuffledOrder.map((realIndex, pos) => ({
+        track: queue[realIndex],
+        realIndex,
+        shuffledPos: pos,
+      }));
+    }
+
+    // Normal mode: show queue in order
+    return queue.map((t, i) => ({ track: t, realIndex: i, shuffledPos: -1 }));
+  }, [queue, shuffle, shuffledOrder, searchQuery]);
+
+  const currentDisplayIndex = useMemo(() => {
+    if (shuffle && shuffledOrder.length > 0 && !searchQuery.trim()) {
+      return shuffledPosition;
+    }
+    return queueIndex;
+  }, [shuffle, shuffledOrder, shuffledPosition, queueIndex, searchQuery]);
+
+  const handlePlayTrack = (realIndex: number) => {
+    playTrackAt(realIndex);
+    playTrack(queue[realIndex], true);
   };
 
-  const handleRemove = (e: React.MouseEvent, index: number) => {
+  const handleRemove = (e: React.MouseEvent, realIndex: number) => {
     e.stopPropagation();
-    removeFromQueue(index);
+    removeFromQueue(realIndex);
   };
 
   if (queue.length === 0) {
@@ -46,7 +74,7 @@ export function QueueView() {
     );
   }
 
-  if (filteredQueue.length === 0) {
+  if (displayEntries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-white/30">
         <p>没有匹配的歌曲</p>
@@ -66,20 +94,21 @@ export function QueueView() {
       </div>
 
       <div className="flex flex-col">
-        {filteredQueue.map((track) => {
-          const originalIndex = queue.findIndex((t) => t.path === track.path);
-          const isCurrent = queueIndex === originalIndex;
+        {displayEntries.map(({ track, realIndex, shuffledPos }) => {
+          const isCurrent = shuffle && !searchQuery.trim() && shuffledPos >= 0
+            ? shuffledPos === currentDisplayIndex
+            : realIndex === queueIndex;
           return (
             <div
-              key={`queue-${track.path}-${originalIndex}`}
-              onClick={() => handlePlayTrack(track, originalIndex)}
+              key={`queue-${track.path}-${realIndex}`}
+              onClick={() => handlePlayTrack(realIndex)}
               className={cn(
                 "grid grid-cols-[auto_1fr_1fr_auto] gap-4 px-4 py-2.5 items-center cursor-pointer transition-colors duration-150 group rounded-lg mx-1",
                 isCurrent ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
               )}
             >
               <button
-                onClick={(e) => handleRemove(e, originalIndex)}
+                onClick={(e) => handleRemove(e, realIndex)}
                 className="w-5 text-white/20 group-hover:text-red-400 transition-colors"
                 title="从队列移除"
               >

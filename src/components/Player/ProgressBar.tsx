@@ -82,10 +82,10 @@ export function ProgressBar({ onSeek, compact = false }: ProgressBarProps) {
         onMouseLeave={handleMouseLeave}
       >
         {/* Track background */}
-        <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+        <div className="h-1 w-full rounded-full bg-[--slider-track] overflow-hidden">
           {/* Progress fill */}
           <div
-            className="h-full rounded-full bg-white/70 transition-all duration-100"
+            className="h-full rounded-full bg-[--slider-fill] transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -105,7 +105,7 @@ export function ProgressBar({ onSeek, compact = false }: ProgressBarProps) {
         {/* Thumb */}
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg shadow-black/30 transform -translate-x-1/2 transition-opacity",
+            "absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[--slider-thumb] shadow-lg shadow-black/30 transform -translate-x-1/2 transition-opacity",
             isDragging || hoverTime !== null ? "opacity-100 scale-110" : "opacity-0 group-hover:opacity-100"
           )}
           style={{ left: `${progress}%` }}

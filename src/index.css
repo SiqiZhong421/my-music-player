@@ -11,6 +11,9 @@
     --c-text-secondary: 179 179 179;
     --c-text-tertiary: 102 102 102;
     --c-border: 255 255 255;
+    --slider-track: rgba(255, 255, 255, 0.1);
+    --slider-fill: rgba(255, 255, 255, 0.6);
+    --slider-thumb: #fff;
   }
 
   .light {
@@ -21,6 +24,14 @@
     --c-text-secondary: 102 102 102;
     --c-text-tertiary: 153 153 153;
     --c-border: 0 0 0;
+    --slider-track: rgba(0, 0, 0, 0.15);
+    --slider-fill: rgba(0, 0, 0, 0.55);
+    --slider-thumb: #1a1a1a;
+  }
+
+  /* Synchronized theme transition */
+  *, *::before, *::after {
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, fill 200ms ease;
   }
 
   html {
@@ -80,8 +91,8 @@
 .light .border-white\/20 { border-color: rgba(0,0,0,0.15); }
 .light .border-white\/10 { border-color: rgba(0,0,0,0.08); }
 
-.light .bg-black\/20 { background-color: rgba(0,0,0,0.04); }
-.light .bg-black\/40 { background-color: rgba(0,0,0,0.06); }
+.light .bg-black\/20 { background-color: rgba(0,0,0,0.08); }
+.light .bg-black\/40 { background-color: rgba(0,0,0,0.12); }
 
 .light .bg-white\/\[0\.03\] { background-color: rgba(0,0,0,0.02); }
 .light .bg-white\/\[0\.04\] { background-color: rgba(0,0,0,0.03); }

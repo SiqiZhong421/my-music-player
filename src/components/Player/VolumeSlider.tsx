@@ -69,16 +69,16 @@ export function VolumeSlider() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+        <div className="h-1 w-full rounded-full bg-[--slider-track] overflow-hidden">
           <div
-            className="h-full rounded-full bg-white/60 transition-all duration-75"
+            className="h-full rounded-full bg-[--slider-fill] transition-all duration-75"
             style={{ width: `${volume * 100}%` }}
           />
         </div>
 
         <div
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-md transform -translate-x-1/2 transition-opacity",
+            "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[--slider-thumb] shadow-md transform -translate-x-1/2 transition-opacity",
             isDragging ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           )}
           style={{ left: `${volume * 100}%` }}
