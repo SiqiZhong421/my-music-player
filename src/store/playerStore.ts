@@ -17,12 +17,10 @@ function saveTheme(theme: Theme) {
 
 function generateShuffledOrder(length: number, currentIndex: number): number[] {
   const indices = Array.from({ length }, (_, i) => i);
-  // Fisher-Yates shuffle
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
-  // Move current index to the front so it stays in place
   const pos = indices.indexOf(currentIndex);
   if (pos > 0) {
     indices.splice(pos, 1);
@@ -60,6 +58,7 @@ interface PlayerStore {
   nextTrack: () => Track | null;
   prevTrack: () => Track | null;
   playTrackAt: (index: number) => Track | null;
+  insertNextInShuffle: (track: Track) => void;
   removeFromQueue: (index: number) => void;
 }
 
@@ -189,7 +188,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         const newHistory = history.slice(0, -1);
         const prevIndex = history[history.length - 1];
         const prevTrack = queue[prevIndex];
-        // Find position of this index in shuffledOrder
         const pos = shuffledOrder.indexOf(prevIndex);
         set({
           shuffledPosition: pos >= 0 ? pos : shuffledPosition,
@@ -201,7 +199,6 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         });
         return prevTrack;
       }
-      // No history — go backwards in shuffled order
       let prevPos = shuffledPosition - 1;
       if (prevPos < 0) prevPos = shuffledOrder.length - 1;
       const prevIndex = shuffledOrder[prevPos];
@@ -229,22 +226,48 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   },
 
   playTrackAt: (index) => {
-    const { queue, shuffle } = get();
+    const { queue, shuffle, shuffledOrder, queueIndex } = get();
     if (index < 0 || index >= queue.length) return null;
     const track = queue[index];
-    const updates: Partial<PlayerStore> = {
-      queueIndex: index,
-      currentTrack: track,
-      currentTime: 0,
-      duration: track?.duration || 0,
-      history: [],
-    };
-    if (shuffle) {
-      updates.shuffledOrder = generateShuffledOrder(queue.length, index);
-      updates.shuffledPosition = 0;
+
+    if (shuffle && shuffledOrder.length > 0) {
+      const pos = shuffledOrder.indexOf(index);
+      if (pos >= 0) {
+        const history = [...get().history, queueIndex];
+        set({
+          shuffledPosition: pos,
+          queueIndex: index,
+          currentTrack: track,
+          currentTime: 0,
+          duration: track?.duration || 0,
+          history,
+        });
+      } else {
+        set({
+          queueIndex: index,
+          currentTrack: track,
+          currentTime: 0,
+          duration: track?.duration || 0,
+        });
+      }
+    } else {
+      set({
+        queueIndex: index,
+        currentTrack: track,
+        currentTime: 0,
+        duration: track?.duration || 0,
+      });
     }
-    set(updates);
     return track;
+  },
+
+  insertNextInShuffle: (track) => {
+    const { queue, shuffledOrder, shuffledPosition } = get();
+    const newQueue = [...queue, track];
+    const newIndex = newQueue.length - 1;
+    const newOrder = [...shuffledOrder];
+    newOrder.splice(shuffledPosition + 1, 0, newIndex);
+    set({ queue: newQueue, shuffledOrder: newOrder });
   },
 
   removeFromQueue: (index) => {

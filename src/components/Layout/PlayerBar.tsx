@@ -17,7 +17,7 @@ export function PlayerBar() {
   const { seek, togglePlay, skipNext, skipPrev } = useAudioPlayer();
 
   return (
-    <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl grid grid-cols-[1fr_auto_1fr] items-center px-4">
+    <div className="h-20 border-t border-white/[0.06] bg-black/40 backdrop-blur-2xl grid grid-cols-[1fr_2fr_1fr] items-center px-4">
       <div className="flex items-center gap-3 min-w-0">
         <AlbumArt
           coverArt={currentTrack?.coverArt || null}

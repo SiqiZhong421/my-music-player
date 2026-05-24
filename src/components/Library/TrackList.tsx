@@ -30,6 +30,8 @@ export function TrackList({
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const queue = usePlayerStore((s) => s.queue);
   const setQueue = usePlayerStore((s) => s.setQueue);
+  const playTrackAt = usePlayerStore((s) => s.playTrackAt);
+  const insertNextInShuffle = usePlayerStore((s) => s.insertNextInShuffle);
   const { playTrack } = useAudioPlayer();
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
   const [targetPlaylistId, setTargetPlaylistId] = useState("");
@@ -62,10 +64,26 @@ export function TrackList({
   );
 
   const handlePlayTrack = (track: Track, index: number) => {
-    if (queue.length === 0 || queue !== queueSource) {
+    const isShuffle = usePlayerStore.getState().shuffle;
+    const isInQueue = queue.some((t) => t.path === track.path);
+
+    if (!isShuffle) {
+      // Shuffle OFF: always set entire source as queue, play sequentially from clicked track
       setQueue(queueSource, index);
+      playTrack(track, true);
+    } else {
+      // Shuffle ON
+      if (isInQueue) {
+        // Track already in queue: jump to it without resetting shuffle order
+        const queueIdx = queue.findIndex((t) => t.path === track.path);
+        playTrackAt(queueIdx);
+        playTrack(track, true);
+      } else {
+        // Track NOT in queue: insert as next in shuffled order
+        insertNextInShuffle(track);
+        playTrack(track, true);
+      }
     }
-    playTrack(track, true);
   };
 
   const toggleSelected = (trackPath: string) => {

@@ -148,6 +148,12 @@ export function useAudioPlayer() {
       if (state.queue.length === 0 && tracks.length > 0) {
         const idx = tracks.findIndex((t) => t.path === track.path);
         setQueue(tracks, idx >= 0 ? idx : 0);
+        if (autoPlay) setIsPlaying(true);
+        return;
+      }
+      const queueIdx = state.queue.findIndex((t) => t.path === track.path);
+      if (queueIdx >= 0) {
+        state.playTrackAt(queueIdx);
       } else {
         setCurrentTrack(track);
       }
